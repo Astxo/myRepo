@@ -44,4 +44,5 @@
             margeRecursive(item.getParent().getParent(), valueTypeId, periodIds,
                     calculatedDataMap, params);
         }
+
     }
