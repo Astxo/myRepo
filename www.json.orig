@@ -1,0 +1,55 @@
+    public static void margeRecursive(TrackingItemDataDto item, Integer valueTypeId, Set<Integer> periodIds,
+                                      Map<Integer, Map<Integer, CalculatedDataImpl>> calculatedDataMap, Params params) {
+        List<TrackingItemDataDto> dataPoints = item.getDataPoints();
+        if (dataPoints == null) {
+            dataPoints = new LinkedList();
+            item.setDataPoints(dataPoints);
+        }
+        if (!contains(dataPoints, valueTypeId)) {
+            TrackingItemDataDto dataPoint = new TrackingItemDataDto(calculationDataPointId(valueTypeId));
+            dataPoints.add(dataPoint);
+            Map<Integer, HashMap<Integer, Object>> value = new HashMap<>();
+            dataPoint.setValue(value);
+            HashMap<Integer, Object> data = new HashMap<>();
+            //first key in value is dataPointTypeId
+            value.put(valueTypeId, data);
+            //find indicatorId and ProjectId
+            Integer projectId = findParentItemBySysName(item, PROJECT_SYSTEM_NAME).getId();
+            Integer indicatorId = findParentItemBySysName(item, INDICATOR_SYSTEM_NAME).getId();
+            //find CalculatedData
+            if(calculatedDataMap.get(projectId) == null){
+                return;
+            }
+            CalculatedDataImpl calculatedData = calculatedDataMap.get(projectId).get(indicatorId);
+            //init parametrs
+            Object[] itemIds = getItemIds(item, item.getParent(), indicatorId, params);
+            Pair<Integer, String> dataPointIndex = getDataPointIndexByValueTypeId(valueTypeId);
+            //init calculated data
+            switch (valueTypeId) {
+                case IndicatorUtil.BASELINE_VALUE_TYPE_ID:
+                    data.put(-1, calculatedData.getYearCalculated(itemIds, null, dataPointIndex));
+                    break;
+                case IndicatorUtil.ACTUAL_VALUE_TYPE_ID:
+                case IndicatorUtil.TARGET_VALUE_TYPE_ID:
+                    for (Integer periodId : periodIds) {
+                        data.put(periodId, calculatedData.getYearCalculated(itemIds, periodId, dataPointIndex));
+                    }
+                    break;
+                default:
+                    System.out.println("ERROR: unrecognised valueTypeId " + valueTypeId);//TODO
+                    //throw new IllegalStateException();
+            }
+        }
+        if (!item.getParent().getSystemName().equals(INDICATOR_SYSTEM_NAME)) {
+            margeRecursive(item.getParent().getParent(), valueTypeId, periodIds,
+                    calculatedDataMap, params);
+        }
+
+    }
+	
+<<<<<<< HEAD
+	
+	
+=======
+	44
+>>>>>>> story/branch3
